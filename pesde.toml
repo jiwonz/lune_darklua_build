@@ -7,6 +7,10 @@ license = "MIT"
 include = ["pesde.toml", "README.md", "LICENSE", ".luaurc", "src/**/*.luau"]
 private = true
 
+[engines]
+pesde = "^0.6.2"
+lune = "^0.8.9"
+
 [target]
 environment = "lune"
 lib = "src/lib/init.luau"
@@ -26,11 +30,8 @@ darklua = { name = "pesde/darklua", version = "^0.16.0" }
 [dependencies]
 luau_path = { name = "jiwonz/luau_path", version = "^0.1.3", target = "luau" }
 pathfs = { name = "jiwonz/pathfs", version = "^0.6.0-rc.4" }
-progressbar = { name = "veternitzz/progressbar", version = "^1.0.1" }
 dirs = { name = "jiwonz/dirs", version = "^0.4.0" }
-glob = { name = "jiwonz/glob", version = "^0.1.1" }
+glob = { repo = "ewd3v/glob-lune", rev = "3e80361" }                           # { name = "jiwonz/glob", version = "^0.1.1" }
 pesde_exec = { name = "jiwonz/pesde_exec", version = "^0.4.2" }
-
-[patches]
-"jiwonz/glob" = { "0.1.1 lune" = "patches/jiwonz+glob-0.1.1+lune.patch" }
-"veternitzz/progressbar" = { "1.0.1 lune" = "patches/veternitzz+progressbar-1.0.1+lune.patch" }
+option = { name = "lukadev_0/option", version = "^1.2.0" }
+result = { name = "lukadev_0/result", version = "^1.2.0" }

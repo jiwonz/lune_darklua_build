@@ -1,8 +1,7 @@
 local luau_path = require("@luau_pkg/luau_path")
 local dirs = require("@pkg/dirs")
 local pathfs = require("@pkg/pathfs")
-local glob = require("@pkg/glob")
-local progressbar = require("@pkg/progressbar")
+local globPackage = require("@pkg/glob")
 local pesde_exec = require("@pkg/pesde_exec")
 
 local stdio = require("@lune/stdio")
@@ -11,11 +10,13 @@ local task = require("@lune/task")
 local fs = pathfs.fs
 local Path = luau_path.Path
 
+local progressbar = require("./progressbar")
 local clr = stdio.color
 
 type AsPath = luau_path.AsPath
 type Path = luau_path.Path
 
+type Files = { Path }
 export type Options = {
 	include: { string }?,
 	ignore: { string }?,
@@ -26,6 +27,11 @@ export type Options = {
 	silent: boolean?,
 	watch: boolean?,
 }
+
+-- Simple wrapper that fixes the issue with the glob package mutating the pattern array
+local function glob(pattern: string | { string }, options: globPackage.Option?): Files
+	return globPackage(if type(pattern) == "table" then table.clone(pattern) else pattern, options)
+end
 
 local function reconcileFiles(files: { Path }, into: Path, cwd: Path)
 	for _, path in ipairs(files) do
@@ -50,7 +56,6 @@ local function getBuildTime(start: number)
 	return `{math.round((os.clock() - start) * 1000 * 10000) / 10000} ms`
 end
 
-type Files = { Path }
 local function build(input: AsPath, output: AsPath, options: Options?)
 	local uoptions = (options or {}) :: Options
 
@@ -184,6 +189,7 @@ local function build(input: AsPath, output: AsPath, options: Options?)
 
 		refreshModified({ inputFiles, buildFiles })
 
+		stdio.write("Watching for changes...\n")
 		while task.wait(1) do
 			local newInputFiles = glob(inputFileGlobs, globOptions)
 			local newBuildFiles = glob(buildFileGlobs, globOptions)
