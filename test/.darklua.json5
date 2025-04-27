@@ -1,0 +1,33 @@
+{
+  generator: "retain_lines",
+
+  rules: [
+    {
+      rule: "convert_require",
+
+      current: {
+        name: "path",
+
+        // optional (defaults to 'init')
+        module_folder_name: "init",
+
+        use_luau_configuration: true,
+      },
+
+      target: {
+        name: "roblox",
+
+        // optional
+        rojo_sourcemap: "sourcemap.json",
+
+        // optional (defaults to 'find_first_child')
+        indexing_style: "find_first_child", // 'wait_for_child' or 'property'
+      },
+    },
+
+    "compute_expression",
+    "remove_unused_if_branch",
+    "filter_after_early_return",
+    "remove_empty_do",
+  ],
+}

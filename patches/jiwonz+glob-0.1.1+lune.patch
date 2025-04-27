@@ -1,0 +1,27 @@
+diff --git a/src/lib.luau b/src/lib.luau
+index 8f1c0de..6539b96 100644
+--- a/src/lib.luau
++++ b/src/lib.luau
+@@ -38,7 +38,7 @@ return function(pattern: string | { string }, option: Option?): { pathfs.Path }
+ 		if type(pattern) == "string" then
+ 			globRegexes = { (globrex(pattern, newGlobrexOption).path :: any).regex }
+ 		elseif type(pattern) == "table" then
+-			globRegexes = pattern :: any
++			globRegexes = table.create(#pattern)
+ 			for i, v in pattern do
+ 				globRegexes[i] = (globrex(v, newGlobrexOption).path :: any).regex
+ 			end
+@@ -78,10 +78,10 @@ return function(pattern: string | { string }, option: Option?): { pathfs.Path }
+ 				end
+ 			end
+ 			local noCurDirVP = pathfs.withoutCurDir(vp)
+-			local valid = true
++			local valid = false
+ 			for _, globRegex in globRegexes do
+-				if not globRegex:test(noCurDirVP:toString()) then
+-					valid = false
++				if globRegex:test(noCurDirVP:toString()) then
++					valid = true
+ 					break
+ 				end
+ 			end

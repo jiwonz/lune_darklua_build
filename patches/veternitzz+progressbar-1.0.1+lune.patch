@@ -1,0 +1,15 @@
+diff --git a/lib.luau b/lib.luau
+index 59d9d28..83bc0bd 100644
+--- a/lib.luau
++++ b/lib.luau
+@@ -3,8 +3,8 @@
+ local task = require("@lune/task")
+ local stdio = require("@lune/stdio")
+ 
+-local Result = require("@pkg/result")
+-local Option = require("@pkg/option")
++local Result = require("./lune_packages/result")
++local Option = require("./lune_packages/option")
+ type Option<T> = Option.Option<T>
+ type Result<T, E> = Result.Result<T, E>
+ 
