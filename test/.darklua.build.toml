@@ -2,4 +2,5 @@ input = "src"
 output = "out"
 
 [options]
+include = [".darklua.json5", ".luaurc", "*.project.json", "sourcemap.json"]
 watch = true

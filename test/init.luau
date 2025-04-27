@@ -10,7 +10,7 @@ darklua_build("src", "out", {
 		"*.project.json",
 		"sourcemap.json",
 	},
-	temp_dir = ".",
+	temp_dir_location = ".",
 	temp_dir_keep = false,
 	silent = false,
 	watch = true,

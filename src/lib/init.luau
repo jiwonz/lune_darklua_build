@@ -18,14 +18,17 @@ type Path = luau_path.Path
 
 type Files = { Path }
 export type Options = {
+	cwd: AsPath?,
 	include: { string }?,
 	ignore: { string }?,
-	cwd: AsPath?,
 	darklua_config: AsPath?,
-	temp_dir: AsPath?,
-	temp_dir_keep: boolean?,
+
 	silent: boolean?,
 	watch: boolean?,
+
+	temp_dir_location: AsPath?,
+	-- temp_dir_name: string?, -- TODO: Figure out a "safe" way to add this without the risk of deleting user's files. Prompting would work, but is in the way of automation (another config like --yes flag?)
+	temp_dir_keep: boolean?,
 }
 
 -- Simple wrapper that fixes the issue with the glob package mutating the pattern array
@@ -59,7 +62,7 @@ end
 local function build(input: AsPath, output: AsPath, options: Options?)
 	local uoptions = (options or {}) :: Options
 
-	local workingDirPath = Path.from(uoptions.cwd or pathfs.cwd())
+	local workingDirPath = Path.from(if uoptions.cwd and #uoptions.cwd > 0 then uoptions.cwd else pathfs.cwd())
 
 	local inputFileGlobs = { Path.from(input):toString() .. "/**/*" }
 	local buildFileGlobs = uoptions.include or {}
@@ -87,10 +90,11 @@ local function build(input: AsPath, output: AsPath, options: Options?)
 		local resolvedInputFiles = inputFiles or glob(inputFileGlobs, globOptions)
 		local resolvedBuildFiles = buildFiles or glob(buildFileGlobs, globOptions)
 
-		local buildDir = dirs.createTempDir(
-			if uoptions.temp_dir then workingDirPath:join(uoptions.temp_dir) else nil,
-			"darklua_build_"
-		)
+		local buildDirPath = if (uoptions.temp_dir_location or uoptions.temp_dir_keep)
+			then workingDirPath:join(uoptions.temp_dir_location or ".")
+			else nil
+
+		local buildDir = dirs.createTempDir(buildDirPath, "darklua_build_")
 
 		local function finish(write: boolean?)
 			if not uoptions.silent then
@@ -102,7 +106,12 @@ local function build(input: AsPath, output: AsPath, options: Options?)
 			end
 
 			if write and not uoptions.silent then
-				stdio.write(`{clr("green")}Built in {getBuildTime(buildStart)}{clr("reset")}\n`)
+				stdio.write(`{clr("green")}Built in {getBuildTime(buildStart)}{clr("reset")}`)
+				if uoptions.temp_dir_keep then
+					stdio.write(` (build: {buildDir.path:toString()})`)
+				end
+
+				stdio.write("\n")
 			end
 
 			return resolvedInputFiles, resolvedBuildFiles
