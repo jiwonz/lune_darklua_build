@@ -23,6 +23,7 @@ default = "https://github.com/pesde-pkg/index"
 
 [scripts]
 test = "test/init.luau"
+script = "src/script/init.luau"
 
 [peer_dependencies]
 darklua = { name = "pesde/darklua", version = "^0.16.0" }
