@@ -39,16 +39,20 @@ end
 local function reconcileFiles(files: { Path }, into: Path, cwd: Path)
 	for _, path in ipairs(files) do
 		local destPath = into:join(assert(path:stripPrefix(cwd)))
+		local destParentPath = destPath:parent()
 
-		local parent = destPath:parent()
-		if parent then
-			fs.writeDir(parent)
+		if destParentPath and not fs.isDir(destParentPath) then
+			fs.writeDir(destParentPath)
 		end
 
 		if fs.isFile(path) then
-			-- Copy whole files
-			fs.copy(path, destPath, true)
+			-- Copy whole files (if we use fs.copy, we may copy over read-only files)
+			fs.writeFile(destPath, fs.readFile(path))
 		elseif fs.isDir(path) then
+			if fs.isDir(destPath) then
+				continue
+			end
+
 			-- But don't copy folder contents
 			fs.writeDir(destPath)
 		end
@@ -74,109 +78,100 @@ local function build(input: AsPath, output: AsPath, options: Options?)
 	local function doBuild(inputFiles: Files?, buildFiles: Files?): (Files, Files)
 		local buildStart = os.clock()
 
-		-- stylua: ignore
-		local bar = progressbar.new()
-			:withStage("resolve", "Resolving files")
-			:withStage("process", "Processing with Darklua")
-			:withStage("output", "Copying files to output")
+		local bar: progressbar.ProgressBarImpl
+		local resolvedInputFiles: Files
+		local resolvedBuildFiles: Files
+		local buildDir: pathfs.Directory
 
-		if not uoptions.silent then
-			bar:start()
-		end
+		local success, err = pcall(function()
+			-- stylua: ignore
+			bar = progressbar.new()
+				:withStage("resolve", "Resolving files")
+				:withStage("process", "Processing with Darklua")
+				:withStage("output", "Copying files to output")
 
-		local outputPath = workingDirPath:join(output)
-		local darkluaConfigPath = if uoptions.darklua_config then workingDirPath:join(uoptions.darklua_config) else nil
-
-		local resolvedInputFiles = inputFiles or glob(inputFileGlobs, globOptions)
-		local resolvedBuildFiles = buildFiles or glob(buildFileGlobs, globOptions)
-
-		local buildDirPath = if (uoptions.temp_dir_location or uoptions.temp_dir_keep)
-			then workingDirPath:join(uoptions.temp_dir_location or ".")
-			else nil
-
-		local buildDir = dirs.createTempDir(buildDirPath, "darklua_build_")
-
-		local function finish(write: boolean?)
 			if not uoptions.silent then
-				bar:stop()
+				bar:start()
 			end
 
-			if not uoptions.temp_dir_keep then
-				buildDir:removeDir()
-			end
+			local outputPath = workingDirPath:join(output)
+			local darkluaConfigPath = if uoptions.darklua_config
+				then workingDirPath:join(uoptions.darklua_config)
+				else nil
 
-			if write and not uoptions.silent then
-				stdio.write(`{clr("green")}Built in {getBuildTime(buildStart)}{clr("reset")}`)
-				if uoptions.temp_dir_keep then
-					stdio.write(` (build: {buildDir.path:toString()})`)
+			resolvedInputFiles = inputFiles or glob(inputFileGlobs, globOptions)
+			resolvedBuildFiles = buildFiles or glob(buildFileGlobs, globOptions)
+
+			local buildDirPath = if (uoptions.temp_dir_location or uoptions.temp_dir_keep)
+				then workingDirPath:join(uoptions.temp_dir_location or ".")
+				else nil
+
+			buildDir = dirs.createTempDir(buildDirPath, "darklua_build_")
+
+			reconcileFiles(resolvedInputFiles, buildDir.path, workingDirPath)
+			reconcileFiles(resolvedBuildFiles, buildDir.path, workingDirPath)
+
+			bar:nextStage() -- process
+
+			local processDir = buildDir.path:join(input):toString()
+			local configPath = if darkluaConfigPath then darkluaConfigPath:toString() else nil
+
+			if not configPath then
+				if fs.isFile(buildDir.path:join(".darklua.json")) then
+					configPath = buildDir.path:join(".darklua.json"):toString()
+				elseif fs.isFile(buildDir.path:join(".darklua.json5")) then
+					configPath = buildDir.path:join(".darklua.json5"):toString()
 				end
-
-				stdio.write("\n")
 			end
 
-			return resolvedInputFiles, resolvedBuildFiles
-		end
-
-		reconcileFiles(resolvedInputFiles, buildDir.path, workingDirPath)
-		reconcileFiles(resolvedBuildFiles, buildDir.path, workingDirPath)
-
-		bar:nextStage() -- process
-
-		local processDir = buildDir.path:join(input):toString()
-		local configPath = if darkluaConfigPath then darkluaConfigPath:toString() else nil
-
-		if not configPath then
-			if fs.isFile(buildDir.path:join(".darklua.json")) then
-				configPath = buildDir.path:join(".darklua.json"):toString()
-			elseif fs.isFile(buildDir.path:join(".darklua.json5")) then
-				configPath = buildDir.path:join(".darklua.json5"):toString()
-			end
-		end
-
-		local args = {
-			"process",
-			processDir,
-			processDir,
-		}
-
-		if configPath then
-			table.insert(args, "--config")
-			table.insert(args, configPath)
-		end
-
-		local result = pesde_exec("darklua", args)
-		if result.ok and #result.stderr > 0 then
-			result = {
-				ok = false,
-				code = 1,
-				stdout = result.stdout,
-				stderr = result.stderr,
+			local args = {
+				"process",
+				processDir,
+				processDir,
 			}
+
+			if configPath then
+				table.insert(args, "--config")
+				table.insert(args, configPath)
+			end
+
+			local result = pesde_exec("darklua", args)
+			if #result.stderr > 0 then
+				error(result.stderr)
+			end
+
+			bar:nextStage() -- output
+
+			local outDir = pathfs.Directory.new(outputPath)
+			outDir:writeDir()
+
+			fs.copy(processDir, outDir.path:join(input), true)
+			reconcileFiles(resolvedBuildFiles, outDir.path, workingDirPath)
+		end)
+
+		if not uoptions.silent and bar then
+			bar:stop()
 		end
 
-		if not result.ok then
-			local returnValues = table.pack(finish())
-
-			stdio.write(clr("red") .. string.rep("-", 20) .. clr("reset") .. "\n")
-			stdio.write(result.stderr)
-			stdio.write(clr("red") .. string.rep("-", 20) .. clr("reset") .. "\n")
-
-			-- if not uoptions.watch then
-			-- 	process.exit(result.code) -- lune panic bug
-			-- end
-
-			return unpack(returnValues, 1, returnValues.n)
+		if not uoptions.temp_dir_keep and buildDir then
+			buildDir:removeDir()
 		end
 
-		bar:nextStage() -- output
+		if success and not uoptions.silent then
+			stdio.write(`{clr("green")}Built in {getBuildTime(buildStart)}{clr("reset")}`)
+			if uoptions.temp_dir_keep and buildDir then
+				stdio.write(` (build: {buildDir.path:toString()})`)
+			end
 
-		local outDir = pathfs.Directory.new(outputPath)
-		outDir:writeDir()
+			stdio.write("\n")
+		elseif not success then
+			stdio.write(clr("red") .. string.rep("-", 20) .. clr("reset") .. "\n")
+			stdio.write(tostring(err))
+			stdio.write(clr("red") .. string.rep("-", 20) .. clr("reset") .. "\n")
+		end
 
-		fs.copy(processDir, outDir.path:join(input), true)
-		reconcileFiles(resolvedBuildFiles, outDir.path, workingDirPath)
-
-		return finish(true)
+		return assert(resolvedInputFiles or inputFiles, "recieved no inputFiles"),
+			assert(resolvedBuildFiles or buildFiles, "recieved no buildFiles")
 	end
 
 	local inputFiles, buildFiles = doBuild()
