@@ -1,10 +1,11 @@
+-- Ripped from: https://github.com/pesde-pkg/tooling/blob/865bfe1859f4967c4e4b0bd93b5664afd94b6a2c/toolchainlib/src/utils/progress.luau
 --> Inspired by Rokit's progress bar: https://github.com/rojo-rbx/rokit/blob/a303faf/src/util/progress.rs
 
 local task = require("@lune/task")
 local stdio = require("@lune/stdio")
 
-local Result = require("@pkg/result")
-local Option = require("@pkg/option")
+local Result = require("../../lune_packages/result")
+local Option = require("../../lune_packages/option")
 type Option<T> = Option.Option<T>
 type Result<T, E> = Result.Result<T, E>
 
@@ -53,10 +54,14 @@ function ProgressBar.start(self: ProgressBarImpl): ()
 	end
 
 	self.thread = task.spawn(function()
-		while not self.finished do
+		while true do
 			for _, spinner in SPINNERS do
+				if self.finished then
+					return
+				end
+
 				local stage = self.stages[self.currentStageIndex]
-				stdio.write(
+				stdio.ewrite(
 					`\x1b[2K\x1b[0G{stdio.color("cyan")}{spinner} {stage.message}{stdio.color("reset")}{string.rep(
 						" ",
 						MAX_MESSAGE_LENGTH - #stage.message
@@ -77,8 +82,7 @@ end
 function ProgressBar.stop(self: ProgressBarImpl): ()
 	-- Trigger upvalue, kill thread and clean progress bar remnant
 	self.finished = true
-	task.cancel(self.thread :: thread)
-	stdio.write("\x1b[2K\x1b[0G")
+	stdio.ewrite("\x1b[2K\x1b[0G")
 end
 
 function ProgressBar.nextStage(self: ProgressBarImpl): Result<nil, string>

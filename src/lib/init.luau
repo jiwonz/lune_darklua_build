@@ -10,7 +10,7 @@ local task = require("@lune/task")
 local fs = pathfs.fs
 local Path = luau_path.Path
 
-local progressbar = require("./progressbar")
+local progressbar = require("./progress")
 local clr = stdio.color
 
 type AsPath = luau_path.AsPath
