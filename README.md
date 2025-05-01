@@ -5,7 +5,7 @@ Also comes as a library for usage within Lune scripts.
 
 ## Install
 
-### With pesde
+### With pesde (not published yet, check first todo at the bottom)
 
 ```sh
 pesde add pesde/darklua --dev -t lune # May be specified as a peer dependecy
