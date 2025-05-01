@@ -5,7 +5,6 @@ authors = ["ewdev"]
 repository = "https://github.com/ewd3v/lune_darklua_build"
 license = "MIT"
 include = ["pesde.toml", "README.md", "LICENSE", ".luaurc", "src/**/*.luau"]
-private = true
 
 [engines]
 pesde = "^0.6.2"
