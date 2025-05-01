@@ -136,7 +136,7 @@ local function build(input: AsPath, output: AsPath, options: Options?)
 			end
 
 			local result = pesde_exec("darklua", args)
-			if #result.stderr > 0 then
+			if not result.ok or (#result.stderr > 0 and string.find(string.lower(result.stderr), "error")) then
 				error(result.stderr)
 			end
 
