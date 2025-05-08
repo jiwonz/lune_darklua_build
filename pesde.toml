@@ -4,7 +4,7 @@ description = "A darklua build script for Lune"
 authors = ["ewdev"]
 repository = "https://github.com/ewd3v/lune_darklua_build"
 license = "MIT"
-include = ["pesde.toml", "README.md", "LICENSE", ".luaurc", "src/**/*.luau"]
+includes = ["pesde.toml", "README.md", "LICENSE", ".luaurc", "src/**/*.luau"]
 
 [engines]
 pesde = "^0.6.2"
