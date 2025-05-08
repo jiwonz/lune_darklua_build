@@ -25,21 +25,19 @@ resolved_ty = "standard"
 ref_ty = "pesde"
 index_url = "https://github.com/pesde-pkg/index"
 
-[graph."ewdev/glob@0.1.2 lune"]
-direct = ["glob", { repo = "https://github.com/ewd3v/glob-lune", rev = "3e80361" }, "standard"]
+[graph."ewdev/glob@0.1.3-rc.1 lune"]
+direct = ["glob", { name = "ewdev/glob", version = "^0.1.3-rc.1", index = "default" }, "standard"]
 resolved_ty = "standard"
 
-[graph."ewdev/glob@0.1.2 lune".dependencies]
+[graph."ewdev/glob@0.1.3-rc.1 lune".dependencies]
 "jiwonz/pathfs@0.6.0-rc.4 lune" = "pathfs"
 "kimpure/globrex_lune@0.2.4 lune" = "globrex_lune"
 
-[graph."ewdev/glob@0.1.2 lune".pkg_ref]
-ref_ty = "git"
-repo = "https://github.com/ewd3v/glob-lune"
-tree_id = "d92b4e97f6311700faa329a524608d596f7d1802"
-new_structure = true
+[graph."ewdev/glob@0.1.3-rc.1 lune".pkg_ref]
+ref_ty = "pesde"
+index_url = "https://github.com/pesde-pkg/index"
 
-[graph."ewdev/glob@0.1.2 lune".pkg_ref.dependencies]
+[graph."ewdev/glob@0.1.3-rc.1 lune".pkg_ref.dependencies]
 globrex_lune = [{ name = "kimpure/globrex_lune", version = "^0.2.4", index = "https://github.com/pesde-pkg/index" }, "standard"]
 luau_check = [{ name = "jiwonz/luau_check", version = "^0.3.13", index = "https://github.com/pesde-pkg/index" }, "dev"]
 luau_lsp = [{ name = "pesde/luau_lsp", version = "^1.37.0", index = "https://github.com/pesde-pkg/index" }, "dev"]
