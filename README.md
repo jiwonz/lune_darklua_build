@@ -5,7 +5,7 @@ Also comes as a library for usage within Lune scripts.
 
 ## Install
 
-### With pesde (not published yet, check first todo at the bottom)
+### With pesde
 
 ```sh
 pesde add pesde/darklua --dev -t lune # May be specified as a peer dependecy
@@ -89,11 +89,3 @@ darklua_build(
     }
 )
 ```
-
-## Todo
-
-- [ ] Wait for new glob package release to include https://github.com/jiwonz/glob-lune/pull/3 (so this can be published without a git dependency).
-- [ ] Refactor code.
-- [ ] A separate include array, for files that aren't required while building, but should be included in the output (should improve build times).
-- [ ] A way to provide scripts to run before and after building (useful for example to generate rojo sourcemaps required while building).
-- [ ] Reduce the amount of copying and overwriting files that haven't changed.
