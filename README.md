@@ -8,7 +8,7 @@ Also comes as a library for usage within Lune scripts.
 ### With pesde
 
 ```sh
-pesde add pesde/darklua --dev -t lune # May be specified as a peer dependecy
+pesde add pesde/darklua --dev -t lune
 pesde add ewdev/darklua_build --dev -t lune
 pesde install
 ```

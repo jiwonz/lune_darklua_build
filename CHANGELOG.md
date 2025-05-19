@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+Removed the jiwonz/pesde_exec package (deprecated). Darklua now has to be installed in order to use.
+
 ## [0.1.0] - 2025-05-08
 
 Initial release
