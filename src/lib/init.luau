@@ -2,10 +2,10 @@ local luau_path = require("@luau_pkg/luau_path")
 local dirs = require("@pkg/dirs")
 local pathfs = require("@pkg/pathfs")
 local globPackage = require("@pkg/glob")
-local pesde_exec = require("@pkg/pesde_exec")
 
 local stdio = require("@lune/stdio")
 local task = require("@lune/task")
+local process = require("@lune/process")
 
 local fs = pathfs.fs
 local Path = luau_path.Path
@@ -135,7 +135,7 @@ local function build(input: AsPath, output: AsPath, options: Options?)
 				table.insert(args, configPath)
 			end
 
-			local result = pesde_exec("darklua", args)
+			local result = process.spawn("darklua", args)
 			if not result.ok or (#result.stderr > 0 and string.find(string.lower(result.stderr), "error")) then
 				error(result.stderr)
 			end
