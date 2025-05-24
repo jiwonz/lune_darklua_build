@@ -17,6 +17,8 @@ type AsPath = luau_path.AsPath
 type Path = luau_path.Path
 
 type Files = { Path }
+
+type Script<T...> = string | { string } | (T...) -> ()
 export type Options = {
 	cwd: AsPath?,
 	include: { string }?,
@@ -29,6 +31,11 @@ export type Options = {
 	temp_dir_location: AsPath?,
 	-- temp_dir_name: string?, -- TODO: Figure out a "safe" way to add this without the risk of deleting user's files. Prompting would work, but is in the way of automation (another config like --yes flag?)
 	temp_dir_keep: boolean?,
+
+	scripts: {
+		preProcess: Script<string>?,
+		postProcess: Script<string>?,
+	}?,
 }
 
 -- Simple wrapper that fixes the issue with the glob package mutating the pattern array
@@ -63,6 +70,25 @@ local function getBuildTime(start: number)
 	return `{math.round((os.clock() - start) * 1000 * 10000) / 10000} ms`
 end
 
+local function runScript(script: Script<any>, cwd: string?)
+	if type(script) == "function" then
+		return script(cwd)
+	end
+
+	for _, str in ipairs(if type(script) == "string" then { script } else script) do
+		local args = string.split(str, " ")
+		local command = table.remove(args, 1)
+
+		local result = process.spawn(assert(command, "No command provided"), args, {
+			cwd = cwd,
+		})
+
+		if not result.ok or #result.stderr > 0 then -- No idea if this is actually accurate for all cli's
+			error(`{stdio.color("red")}Error while running command: {str}\n{stdio.color("reset")}{result.stderr}`, 0)
+		end
+	end
+end
+
 local function build(input: AsPath, output: AsPath, options: Options?)
 	local uoptions = (options or {}) :: Options
 
@@ -84,10 +110,12 @@ local function build(input: AsPath, output: AsPath, options: Options?)
 		local buildDir: pathfs.Directory
 
 		local success, err = pcall(function()
-			-- stylua: ignore
-			bar = progressbar.new()
+			bar = progressbar
+				.new()
 				:withStage("resolve", "Resolving files")
+				:withStage("preProcess", "Running pre-process script(s)")
 				:withStage("process", "Processing with Darklua")
+				:withStage("postProcess", "Running post-process script(s)")
 				:withStage("output", "Copying files to output")
 
 			if not uoptions.silent then
@@ -110,6 +138,11 @@ local function build(input: AsPath, output: AsPath, options: Options?)
 
 			reconcileFiles(resolvedInputFiles, buildDir.path, workingDirPath)
 			reconcileFiles(resolvedBuildFiles, buildDir.path, workingDirPath)
+
+			bar:nextStage() -- preProcess
+			if uoptions.scripts and uoptions.scripts.preProcess then
+				runScript(uoptions.scripts.preProcess, buildDir.path:toString())
+			end
 
 			bar:nextStage() -- process
 
@@ -137,7 +170,12 @@ local function build(input: AsPath, output: AsPath, options: Options?)
 
 			local result = process.spawn("darklua", args)
 			if not result.ok or (#result.stderr > 0 and string.find(string.lower(result.stderr), "error")) then
-				error(result.stderr)
+				error(result.stderr, 0)
+			end
+
+			bar:nextStage() -- postProcess
+			if uoptions.scripts and uoptions.scripts.postProcess then
+				runScript(uoptions.scripts.postProcess, buildDir.path:toString())
 			end
 
 			bar:nextStage() -- output

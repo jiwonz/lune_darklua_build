@@ -14,4 +14,8 @@ darklua_build("src", "out", {
 	temp_dir_keep = false,
 	silent = false,
 	watch = true,
+
+	scripts = {
+		preProcess = "rojo sourcemap default.project.json -o sourcemap.json",
+	},
 })

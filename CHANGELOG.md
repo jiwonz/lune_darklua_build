@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+Added build scripts, which are specified with the `scripts` option.
+
 ### Removed
 
 Removed the jiwonz/pesde_exec package (deprecated). Darklua now has to be installed in order to use.

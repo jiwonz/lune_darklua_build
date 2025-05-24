@@ -68,6 +68,10 @@ watch = false # If set to true, listens to any changes to any input / build file
 
 temp_dir_keep = false # If true, keeps the temporary build directory that's created after finishing.
 temp_dir_location = "." # Path for where to create the temporary build directory (defaults to system temp directory, unless temp_dir_keep is enabled where the current directory is used instead)
+
+[options.scripts] # An optional dictionary containing a list of scripts to run at certain points while building. All commands are ran inside the temporary build directory.
+preProcess = "rojo sourcemap default.project.json -o sourcemap.json" # An array / string of scripts to run before processing with darklua
+postProcess = [ "command", "another command" ] # An array / string of scripts to run after processing with darklua, and before copying over files to the selected output
 ```
 
 ## Usage (library)
@@ -82,10 +86,17 @@ darklua_build(
     inputPath, -- Path to what to process.
     outputPath, -- Path to the output folder.
     { -- An optional dictionary containing a set of build options.
-        include = { "roblox_packages/**/*", ".darklua.json", "*.project.json", "sourcemap.json" },
-        ignore = { "*.d." }
+        -- For a full list of options, and what they do, refer to the example .darklua.build.toml above.
 
-        -- For a list of options, and what they do, refer to the example .darklua.build.toml above.
+        include = { "roblox_packages/**/*", ".darklua.json", "*.project.json", "sourcemap.json" },
+        ignore = { "*.d." },
+
+        scripts = {
+            preProcess = "rojo sourcemap default.project.json -o sourcemap.json",
+            postProcess = function(buildDir: string) -- Scripts may also be functions, where the 1st argument being sent is the path to the temporary build directory.
+                print("Finished processing inside " .. buildDir)
+            end
+        }
     }
 )
 ```
