@@ -59,7 +59,7 @@ if configFile:isFile() then
 		for option, value in configContent.options do
 			if option == "cwd" then
 				-- Set cwd relative to file
-				value = configFile.path:join(configContent.cwd)
+				value = configFile.path:join(value)
 			end
 
 			options[option] = value
