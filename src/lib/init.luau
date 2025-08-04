@@ -83,7 +83,7 @@ local function runScript(script: Script<any>, cwd: string?)
 			cwd = cwd,
 		})
 
-		if not result.ok or #result.stderr > 0 then -- No idea if this is actually accurate for all cli's
+		if not result.ok then -- No idea if this is actually accurate for all cli's
 			error(`{stdio.color("red")}Error while running command: {str}\n{stdio.color("reset")}{result.stderr}`, 0)
 		end
 	end
