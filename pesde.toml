@@ -1,5 +1,5 @@
 name = "ewdev/darklua_build"
-version = "0.1.1"
+version = "0.1.2"
 description = "A darklua build script for Lune"
 authors = ["ewdev"]
 repository = "https://github.com/ewd3v/lune_darklua_build"
