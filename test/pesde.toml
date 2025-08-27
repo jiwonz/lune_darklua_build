@@ -6,7 +6,7 @@ private = true
 environment = "roblox"
 
 [engines]
-pesde = "^0.6.2"
+pesde = "^0.7.1"
 lune = "^0.8.9"
 
 [indices]
