@@ -4,7 +4,7 @@ if not _G.LUA_ENV then
 end
 
 local args = require("@lune/process").args
-local lib = require("../lib")
+local lib = require("./lib")
 
 local pathfs = require("@pkg/pathfs")
 
